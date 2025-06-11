@@ -12,4 +12,13 @@ async function getAllScholarships() {
   });
 }
 
-module.exports = { getAllScholarships };
+async function createScholarship(data) {
+  return await Scholarship.create(data);
+}
+
+async function deleteScholarship(id) {
+  const deleted = await Scholarship.destroy({ where: { ScholarshipID: id } });
+  return deleted; // trả về số bản ghi đã xóa (0 hoặc 1)
+}
+
+module.exports = { getAllScholarships, createScholarship, deleteScholarship };
