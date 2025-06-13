@@ -3,10 +3,13 @@ const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerAuth = require("./src/middlewares/swagger.middleware");
 const { swaggerSpec, swaggerUiOptions } = require("./src/config/swagger");
-const sequelize = require("./src/config/database");
-const scholarshipRoutes = require("./src/routes/scholarshipRoutes");
-const schoolRoutes = require("./src/routes/schoolRoutes");
+const connectDB = require("./src/config/database");
+const models = require("./src/models");
+
 require("dotenv").config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 
@@ -14,16 +17,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Test database connection
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log("Connected to SQL Server successfully!");
-  })
-  .catch((err) => {
-    console.error("Unable to connect to SQL Server:", err);
-  });
 
 // Apply authentication middleware to Swagger UI
 app.use(
@@ -33,14 +26,15 @@ app.use(
   swaggerUi.setup(swaggerSpec, swaggerUiOptions)
 );
 
-// Test route
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to AI Chatbot API" });
-});
-app.use("/api/schools", schoolRoutes);
-app.use("/api/scholarships", scholarshipRoutes);
 
-const PORT = process.env.PORT || 3000;
+
+// Add your routes here
+app.use('/api/majors', require('./src/routes/majors.routes'));
+app.use('/api/scholarships', require('./src/routes/scholarships.routes'));
+app.use('/api/chat', require('./src/routes/chat.routes'));
+app.use('/api/auth', require('./src/routes/auth.routes'));
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(

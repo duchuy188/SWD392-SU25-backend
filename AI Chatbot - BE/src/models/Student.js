@@ -1,35 +1,36 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
 
-const Student = sequelize.define('Student', {
-  StudentID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+const studentSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  Name: {
-    type: DataTypes.STRING(100),
-    allowNull: true
+  grade: {
+    type: Number,
+    min: 10,
+    max: 12
   },
-  Birthdate: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  Grade: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  Email: {
-    type: DataTypes.STRING(100),
-    allowNull: true
-  },
-  ITtime: {
-    type: DataTypes.STRING(50),
-    allowNull: true
-  }
-}, {
-  tableName: 'Student',
-  timestamps: false
+  academicResults: [{
+    subject: String,
+    score: Number,
+    semester: Number
+  }],
+  interests: [String],
+  personalityType: String,
+  preferredFPTMajors: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Major'
+  }],
+  testResults: [{
+    test: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Test'
+    },
+    score: Number,
+    date: Date
+  }]
 });
 
+const Student = mongoose.model('Student', studentSchema);
 module.exports = Student;

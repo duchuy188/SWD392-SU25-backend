@@ -1,23 +1,22 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
 
-const Admin = sequelize.define('Admin', {
-  AdminID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+const adminSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    maxlength: 100
   },
-  Name: {
-    type: DataTypes.STRING(100),
-    allowNull: true
-  },
-  Role: {
-    type: DataTypes.STRING(50),
-    allowNull: true
+  role: {
+    type: String,
+    required: true,
+    maxlength: 50
   }
 }, {
-  tableName: 'Admin',
-  timestamps: false
+  timestamps: true 
 });
+
+
+
+const Admin = mongoose.model('Admin', adminSchema);
 
 module.exports = Admin;
