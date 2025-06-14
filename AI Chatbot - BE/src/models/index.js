@@ -6,12 +6,12 @@ const Student = require('./Student');
 const Test = require('./Test');
 const Conversation = require('./Conversation');
 const AdmissionMethod = require('./AdmissionMethod');
-const StudyNowPayLater = require('./StudyNowPayLater');
-const EnglishProgram = require('./EnglishProgram');
-const TuitionFee = require('./TuitionFee');
 const AdmissionSchedule = require('./AdmissionSchedule');
 const Admin = require('./Admin');
 const User = require('./User');
+const RefreshToken = require('./RefreshToken');
+const BlacklistToken = require('./BlacklistToken');
+
 
 module.exports = {
   Major,
@@ -22,10 +22,9 @@ module.exports = {
   Test,
   Conversation,
   AdmissionMethod,
-  StudyNowPayLater,
-  EnglishProgram,
-  TuitionFee,
   AdmissionSchedule,
   Admin,
-  User
+  User,
+  RefreshToken,
+  BlacklistToken
 };

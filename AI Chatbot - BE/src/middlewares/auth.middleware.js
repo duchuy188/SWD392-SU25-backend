@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const BlacklistToken = require('../models/BlacklistToken');
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -7,6 +8,11 @@ const authMiddleware = async (req, res, next) => {
     
     if (!token) {
       return res.status(401).json({ error: 'Yêu cầu xác thực' });
+    }
+    
+    const blacklisted = await BlacklistToken.findOne({ token });
+    if (blacklisted) {
+      return res.status(401).json({ error: 'Token đã bị vô hiệu hóa, vui lòng đăng nhập lại' });
     }
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');

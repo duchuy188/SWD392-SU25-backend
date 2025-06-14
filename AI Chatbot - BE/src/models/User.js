@@ -28,21 +28,36 @@ const userSchema = new mongoose.Schema({
     enum: ['student', 'admin'],
     default: 'student'
   },
+  googleId: {
+    type: String,
+    sparse: true
+  },
+  profilePicture: {
+    type: String
+  },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  resetToken: {
+    type: String
+  },
+  resetTokenExpires: {
+    type: Date
   }
 });
 
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+  if (this.password && this.isModified('password')) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
     next();
-  } catch (error) {
-    next(error);
   }
 });
 

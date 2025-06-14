@@ -2,6 +2,11 @@ const User = require('../models/User');
 const Student = require('../models/Student');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const RefreshToken = require('../models/RefreshToken');
+const BlacklistToken = require('../models/BlacklistToken');
+const OTP = require('../models/OTP');
+const crypto = require('crypto');
+const { sendOTPEmail } = require('../utils/emailService');
 
 const AuthController = {
 
@@ -78,15 +83,31 @@ const AuthController = {
         return res.status(404).json({ error: 'Không tìm thấy thông tin sinh viên' });
       }
       
-      const token = jwt.sign(
+
+      const accessToken = jwt.sign(
         { id: user._id, studentId: student?._id },
         process.env.JWT_SECRET || 'your_jwt_secret',
-        { expiresIn: '24h' }
+        { expiresIn: '1h' } // 1 giờ
       );
+      
+
+      const refreshToken = jwt.sign(
+        { id: user._id },
+        process.env.REFRESH_TOKEN_SECRET || 'your_refresh_token_secret',
+        { expiresIn: '7d' } 
+      );
+      
+
+      await RefreshToken.create({
+        token: refreshToken,
+        userId: user._id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
+      });
       
       res.json({
         message: 'Đăng nhập thành công',
-        token,
+        accessToken,
+        refreshToken,
         user: {
           id: user._id,
           email: user.email,
@@ -179,6 +200,190 @@ const AuthController = {
     } catch (error) {
       console.error('Error changing password:', error);
       res.status(500).json({ error: 'Đã xảy ra lỗi khi thay đổi mật khẩu' });
+    }
+  },
+
+  async refreshToken(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return res.status(400).json({ error: 'Refresh token không được cung cấp' });
+      }
+      
+
+      const tokenDoc = await RefreshToken.findOne({ token: refreshToken });
+      
+      if (!tokenDoc || tokenDoc.expiresAt < new Date()) {
+        return res.status(403).json({ error: 'Refresh token không hợp lệ hoặc đã hết hạn' });
+      }
+      
+   
+      const decoded = jwt.verify(
+        refreshToken, 
+        process.env.REFRESH_TOKEN_SECRET || 'your_refresh_token_secret'
+      );
+      
+      const user = await User.findById(decoded.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+      }
+      
+      const student = await Student.findOne({ userId: user._id });
+      
+
+      const accessToken = jwt.sign(
+        { id: user._id, studentId: student?._id },
+        process.env.JWT_SECRET || 'your_jwt_secret',
+        { expiresIn: '1h' }
+      );
+      
+      res.json({
+        accessToken,
+        user: {
+          id: user._id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          studentId: student?._id
+        }
+      });
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(403).json({ error: 'Refresh token không hợp lệ' });
+      }
+      res.status(500).json({ error: 'Đã xảy ra lỗi khi làm mới token' });
+    }
+  },
+
+  async logout(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      const accessToken = req.header('Authorization')?.replace('Bearer ', '');
+      
+
+      if (refreshToken) {
+        await RefreshToken.findOneAndDelete({ token: refreshToken });
+      }
+
+      if (accessToken) {
+        try {
+          await BlacklistToken.create({
+            token: accessToken,
+            expiresAt: new Date(Date.now() + 3600 * 1000)
+          });
+        } catch (error) {
+          console.error('Error blacklisting token:', error);
+        }
+      }
+      
+      res.json({ message: 'Đăng xuất thành công' });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      res.status(500).json({ error: 'Đã xảy ra lỗi khi đăng xuất' });
+    }
+  },
+
+  async forgotPassword(req, res) {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email không được cung cấp' });
+      }
+      
+      const user = await User.findOne({ email });
+      
+      if (!user) {
+        return res.status(404).json({ error: 'Email không tồn tại trong hệ thống' });
+      }
+      
+   
+      const otp = crypto.randomInt(100000, 999999).toString();
+      
+   
+      await OTP.findOneAndDelete({ email }); 
+      await OTP.create({
+        email,
+        otp
+      });
+      
+      // Gửi OTP qua email
+      const emailSent = await sendOTPEmail(email, otp);
+      
+      if (emailSent) {
+        res.json({ message: 'Mã OTP đã được gửi đến email của bạn' });
+      } else {
+        res.status(500).json({ error: 'Không thể gửi email OTP' });
+      }
+    } catch (error) {
+      console.error('Error in forgotPassword:', error);
+      res.status(500).json({ error: 'Đã xảy ra lỗi khi xử lý yêu cầu' });
+    }
+  },
+
+  async verifyOTP(req, res) {
+    try {
+      const { email, otp } = req.body;
+      
+      if (!email || !otp) {
+        return res.status(400).json({ error: 'Email và OTP không được cung cấp đầy đủ' });
+      }
+      
+      const otpRecord = await OTP.findOne({ email, otp });
+      
+      if (!otpRecord) {
+        return res.status(400).json({ error: 'OTP không hợp lệ hoặc đã hết hạn' });
+      }
+      
+   
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      
+     
+      const user = await User.findOne({ email });
+      user.resetToken = resetToken;
+      user.resetTokenExpires = Date.now() + 15 * 60 * 1000; 
+      await user.save();
+      
+      // Xóa OTP đã sử dụng
+      await OTP.findOneAndDelete({ email, otp });
+      
+      res.json({ message: 'Xác thực OTP thành công', resetToken });
+    } catch (error) {
+      console.error('Error in verifyOTP:', error);
+      res.status(500).json({ error: 'Đã xảy ra lỗi khi xác thực OTP' });
+    }
+  },
+
+  async resetPassword(req, res) {
+    try {
+      const { email, resetToken, newPassword } = req.body;
+      
+      if (!email || !resetToken || !newPassword) {
+        return res.status(400).json({ error: 'Thông tin không đầy đủ' });
+      }
+      
+      const user = await User.findOne({ 
+        email, 
+        resetToken, 
+        resetTokenExpires: { $gt: Date.now() } 
+      });
+      
+      if (!user) {
+        return res.status(400).json({ error: 'Token không hợp lệ hoặc đã hết hạn' });
+      }
+      
+  
+      user.password = newPassword;
+      user.resetToken = undefined;
+      user.resetTokenExpires = undefined;
+      await user.save();
+      
+      res.json({ message: 'Đặt lại mật khẩu thành công' });
+    } catch (error) {
+      console.error('Error in resetPassword:', error);
+      res.status(500).json({ error: 'Đã xảy ra lỗi khi đặt lại mật khẩu' });
     }
   }
 };
