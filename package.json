@@ -1,0 +1,44 @@
+{
+  "name": "swd392-su25-backend",
+  "version": "1.0.0",
+  "description": "AI Chatbot for Academic and Career Counseling",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/duchuy188/SWD392-SU25-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/duchuy188/SWD392-SU25-backend/issues"
+  },
+  "homepage": "https://github.com/duchuy188/SWD392-SU25-backend#readme",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.9.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-basic-auth": "^1.2.1",
+    "firebase": "^11.9.1",
+    "firebase-admin": "^13.4.0",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.9.1",
+    "mongoose": "^8.15.2",
+    "mssql": "^11.0.1",
+    "nodemailer": "^7.0.3",
+    "openai": "^5.3.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^4.6.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
