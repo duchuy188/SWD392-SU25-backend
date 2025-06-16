@@ -10,9 +10,16 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3000}`,
-        description: 'Development server',
+        url: process.env.NODE_ENV === 'production'
+          ? 'https://swd392-su25-backend.onrender.com'  
+          : `http://localhost:${process.env.PORT || 3000}`,
+        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
+  
+      {
+        url: `http://localhost:${process.env.PORT || 3000}`,
+        description: 'Local development server',
+      }
     ],
     components: {
       securitySchemes: {
