@@ -7,6 +7,7 @@ const BlacklistToken = require('../models/BlacklistToken');
 const OTP = require('../models/OTP');
 const crypto = require('crypto');
 const { sendOTPEmail } = require('../utils/emailService');
+const { cloudinary } = require('../config/cloudinary');
 
 const AuthController = {
 
@@ -159,6 +160,19 @@ const AuthController = {
       if (phone !== undefined) user.phone = phone;
       if (address !== undefined) user.address = address;
       
+      if (req.file) {
+        if (user.profilePicture && user.profilePicture.includes('cloudinary')) {
+          try {
+            const publicId = user.profilePicture.split('/').pop().split('.')[0];
+            await cloudinary.uploader.destroy('profile-pictures/' + publicId);
+          } catch (error) {
+            console.error('Error deleting old profile picture:', error);
+          }
+        }
+        
+        user.profilePicture = req.file.path;
+      }
+      
       await user.save();
       
       res.json({
@@ -169,7 +183,8 @@ const AuthController = {
           fullName: user.fullName,
           phone: user.phone,
           address: user.address,
-          role: user.role
+          role: user.role,
+          profilePicture: user.profilePicture
         }
       });
     } catch (error) {
@@ -384,6 +399,43 @@ const AuthController = {
     } catch (error) {
       console.error('Error in resetPassword:', error);
       res.status(500).json({ error: 'Đã xảy ra lỗi khi đặt lại mật khẩu' });
+    }
+  },
+
+  async updateProfilePicture(req, res) {
+    try {
+      const userId = req.user.id;
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'Không có file hình ảnh nào được tải lên' });
+      }
+      
+      const imageUrl = req.file.path;
+      
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+      }
+      
+      if (user.profilePicture && user.profilePicture.includes('cloudinary')) {
+        try {
+          const publicId = user.profilePicture.split('/').pop().split('.')[0];
+          await cloudinary.uploader.destroy('profile-pictures/' + publicId);
+        } catch (error) {
+          console.error('Error deleting old profile picture:', error);
+        }
+      }
+      
+      user.profilePicture = imageUrl;
+      await user.save();
+      
+      res.json({
+        message: 'Cập nhật ảnh đại diện thành công',
+        profilePicture: imageUrl
+      });
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      res.status(500).json({ error: 'Đã xảy ra lỗi khi cập nhật ảnh đại diện' });
     }
   }
 };

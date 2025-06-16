@@ -90,7 +90,7 @@
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -100,6 +100,9 @@
  *                 type: string
  *               address:
  *                 type: string
+ *               profilePicture:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Cập nhật thành công
