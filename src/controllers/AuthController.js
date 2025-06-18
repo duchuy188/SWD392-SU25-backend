@@ -282,7 +282,7 @@ const AuthController = {
         await RefreshToken.findOneAndDelete({ token: refreshToken });
       }
 
-      if (accessToken) {
+      if (accessToken && accessToken !== 'undefined') {
         try {
           await BlacklistToken.create({
             token: accessToken,
