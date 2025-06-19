@@ -7,7 +7,6 @@ const Test = require('./Test');
 const Conversation = require('./Conversation');
 const AdmissionMethod = require('./AdmissionMethod');
 const AdmissionSchedule = require('./AdmissionSchedule');
-const Admin = require('./Admin');
 const User = require('./User');
 const RefreshToken = require('./RefreshToken');
 const BlacklistToken = require('./BlacklistToken');
@@ -23,7 +22,6 @@ module.exports = {
   Conversation,
   AdmissionMethod,
   AdmissionSchedule,
-  Admin,
   User,
   RefreshToken,
   BlacklistToken

@@ -70,7 +70,9 @@ const AuthController = {
         return res.status(401).json({ error: 'Email không tồn tại' });
       }
       
-   
+      if (user.isActive === false) {
+        return res.status(403).json({ error: 'Tài khoản đã bị vô hiệu hóa, vui lòng liên hệ quản trị viên' });
+      }
       
       const isPasswordValid = await bcrypt.compare(String(password), user.password);
       

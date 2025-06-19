@@ -44,6 +44,7 @@ app.use('/api/majors', require('./src/routes/majors.routes'));
 app.use('/api/scholarships', require('./src/routes/scholarships.routes'));
 app.use('/api/chat', require('./src/routes/chat.routes'));
 app.use('/api/auth', require('./src/routes/auth.routes'));
+app.use('/api/admin', require('./src/routes/admin.routes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

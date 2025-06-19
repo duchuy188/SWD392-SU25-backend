@@ -22,6 +22,10 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'Không tìm thấy người dùng' });
     }
     
+    if (user.isActive === false) {
+      return res.status(403).json({ error: 'Tài khoản đã bị vô hiệu hóa, vui lòng liên hệ quản trị viên' });
+    }
+    
     req.user = {
       id: user._id,
       email: user.email,
