@@ -19,7 +19,8 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
-      "https://educhatbot-ai.vercel.app"
+      "https://swd-392-su-25-admin-dashboard-eosin.vercel.app"
+
     ], // Thay bằng domain FE thật của bạn
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
