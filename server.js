@@ -19,7 +19,9 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
-      "https://educhatbot-ai.vercel.app"
+      "https://educhatbot-ai.vercel.app",
+      "https://swd-392-su-25-admin-dashboard-eosin.vercel.app",
+      "https://swd-392-su-25-frontend.vercel.app"
     ], // Thay bằng domain FE thật của bạn
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -45,6 +47,7 @@ app.use('/api/scholarships', require('./src/routes/scholarships.routes'));
 app.use('/api/chat', require('./src/routes/chat.routes'));
 app.use('/api/auth', require('./src/routes/auth.routes'));
 app.use('/api/admin', require('./src/routes/admin.routes'));
+app.use('/api/tests', require('./src/routes/tests.routes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

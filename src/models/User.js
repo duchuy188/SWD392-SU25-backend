@@ -50,7 +50,21 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  testResults: [{
+    testId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Test'
+    },
+    testName: String,
+    testType: String,
+    result: String,
+    score: mongoose.Schema.Types.Mixed,
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 });
 
 userSchema.pre('save', async function(next) {

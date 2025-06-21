@@ -27,7 +27,7 @@ const studentSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Test'
     },
-    score: Number,
+    score: mongoose.Schema.Types.Mixed,
     date: Date
   }]
 });

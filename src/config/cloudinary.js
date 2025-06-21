@@ -9,7 +9,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const storage = new CloudinaryStorage({
+const profilePictureStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'profile-pictures',
@@ -22,10 +22,23 @@ const storage = new CloudinaryStorage({
   }
 });
 
+const chatImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'chat-images',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    transformation: [{
+      width: 800,
+      height: 800,
+      crop: 'limit'
+    }]
+  }
+});
+
 const uploadProfilePicture = multer({
-  storage: storage,
+  storage: profilePictureStorage,
   limits: {
-    fileSize: 2 * 1024 * 1024 // giới hạn 2MB
+    fileSize: 2 * 1024 * 1024 
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -36,7 +49,22 @@ const uploadProfilePicture = multer({
   }
 }).single('profilePicture');
 
+const uploadChatImage = multer({
+  storage: chatImageStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file hình ảnh!'), false);
+    }
+  }
+}).single('image');
+
 module.exports = {
   cloudinary,
-  uploadProfilePicture
+  uploadProfilePicture,
+  uploadChatImage
 };

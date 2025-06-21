@@ -1,5 +1,18 @@
 const mongoose = require('mongoose');
 
+const testResultSchema = new mongoose.Schema({
+  type: String,
+  description: String,
+  recommendedMajors: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Major'
+  }],
+  recommendedFPTMajors: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Major'
+  }]
+});
+
 const testSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -19,21 +32,10 @@ const testSchema = new mongoose.Schema({
   questions: [{
     question: String,
     options: [String],
-    correctAnswer: String,
-    weight: Number
+    weight: Number,
+    category: String
   }],
-  results: [{
-    type: String,
-    description: String,
-    recommendedMajors: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Major'
-    }],
-    recommendedFPTMajors: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Major'
-    }]
-  }]
+  results: [testResultSchema]
 }, {
   timestamps: true
 });

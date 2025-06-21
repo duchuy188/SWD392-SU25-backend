@@ -80,44 +80,54 @@ const AuthController = {
         return res.status(401).json({ error: 'Mật khẩu không chính xác' });
       }
       
-      const student = await Student.findOne({ userId: user._id });
-      
-      if (!student && user.role === 'student') {
-        return res.status(404).json({ error: 'Không tìm thấy thông tin sinh viên' });
+      let student = null;
+      if (user.role === 'student') {
+        student = await Student.findOne({ userId: user._id });
+        
+        if (!student) {
+          return res.status(404).json({ error: 'Không tìm thấy thông tin sinh viên' });
+        }
       }
       
+      const tokenPayload = { id: user._id };
+      if (user.role === 'student' && student) {
+        tokenPayload.studentId = student._id;
+      }
 
       const accessToken = jwt.sign(
-        { id: user._id, studentId: student?._id },
+        tokenPayload,
         process.env.JWT_SECRET || 'your_jwt_secret',
-        { expiresIn: '1h' } // 1 giờ
+        { expiresIn: '1h' } 
       );
       
-
       const refreshToken = jwt.sign(
         { id: user._id },
         process.env.REFRESH_TOKEN_SECRET || 'your_refresh_token_secret',
         { expiresIn: '7d' } 
       );
       
-
       await RefreshToken.create({
         token: refreshToken,
         userId: user._id,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
       });
       
+      const userResponse = {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role
+      };
+      
+      if (user.role === 'student' && student) {
+        userResponse.studentId = student._id;
+      }
+      
       res.json({
         message: 'Đăng nhập thành công',
         accessToken,
         refreshToken,
-        user: {
-          id: user._id,
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-          studentId: student?._id
-        }
+        user: userResponse
       });
     } catch (error) {
       console.error('Error logging in:', error);
@@ -134,14 +144,16 @@ const AuthController = {
         return res.status(404).json({ error: 'Không tìm thấy người dùng' });
       }
       
-      const student = await Student.findOne({ userId: user._id });
+      const userResponse = user.toObject();
       
-      res.json({
-        user: {
-          ...user.toObject(),
-          studentId: student?._id
+      if (user.role === 'student') {
+        const student = await Student.findOne({ userId: user._id });
+        if (student) {
+          userResponse.studentId = student._id;
         }
-      });
+      }
+      
+      res.json({ user: userResponse });
     } catch (error) {
       console.error('Error getting current user:', error);
       res.status(500).json({ error: 'Đã xảy ra lỗi khi lấy thông tin người dùng' });
@@ -228,14 +240,12 @@ const AuthController = {
         return res.status(400).json({ error: 'Refresh token không được cung cấp' });
       }
       
-
       const tokenDoc = await RefreshToken.findOne({ token: refreshToken });
       
       if (!tokenDoc || tokenDoc.expiresAt < new Date()) {
         return res.status(403).json({ error: 'Refresh token không hợp lệ hoặc đã hết hạn' });
       }
       
-   
       const decoded = jwt.verify(
         refreshToken, 
         process.env.REFRESH_TOKEN_SECRET || 'your_refresh_token_secret'
@@ -246,24 +256,38 @@ const AuthController = {
         return res.status(404).json({ error: 'Không tìm thấy người dùng' });
       }
       
-      const student = await Student.findOne({ userId: user._id });
+      const tokenPayload = { id: user._id };
       
+      if (user.role === 'student') {
+        const student = await Student.findOne({ userId: user._id });
+        if (student) {
+          tokenPayload.studentId = student._id;
+        }
+      }
 
       const accessToken = jwt.sign(
-        { id: user._id, studentId: student?._id },
+        tokenPayload,
         process.env.JWT_SECRET || 'your_jwt_secret',
         { expiresIn: '1h' }
       );
       
+      const userResponse = {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role
+      };
+      
+      if (user.role === 'student') {
+        const student = await Student.findOne({ userId: user._id });
+        if (student) {
+          userResponse.studentId = student._id;
+        }
+      }
+      
       res.json({
         accessToken,
-        user: {
-          id: user._id,
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-          studentId: student?._id
-        }
+        user: userResponse
       });
     } catch (error) {
       console.error('Error refreshing token:', error);
