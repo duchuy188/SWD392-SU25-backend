@@ -9,6 +9,7 @@ const AdmissionSchedule = require('./AdmissionSchedule');
 const User = require('./User');
 const RefreshToken = require('./RefreshToken');
 const BlacklistToken = require('./BlacklistToken');
+const NotificationToken = require('./NotificationToken');
 
 
 module.exports = {
@@ -22,5 +23,6 @@ module.exports = {
   AdmissionSchedule,
   User,
   RefreshToken,
-  BlacklistToken
+  BlacklistToken,
+  NotificationToken
 };
