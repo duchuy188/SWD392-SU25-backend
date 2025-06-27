@@ -88,7 +88,32 @@ const majorSchema = new mongoose.Schema({
   },
   subjectCombinations: [{
     type: String
-  }]
+  }],
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  shortDescription: {
+    type: String,
+    maxlength: 200
+  },
+  scholarships: [{
+    name: String,
+    description: String,
+    value: String
+  }],
+  tuitionByCampus: {
+    HANOI: {
+      firstSem: Number,
+      midSem: Number,
+      lastSem: Number
+    },
+    HCMC: {
+      firstSem: Number,
+      midSem: Number,
+      lastSem: Number
+    }
+  }
 }, {
   timestamps: true
 });

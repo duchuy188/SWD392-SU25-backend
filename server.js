@@ -53,6 +53,15 @@ app.use('/api/admin', require('./src/routes/admin.routes'));
 app.use('/api/tests', require('./src/routes/tests.routes'));
 app.use('/api/notifications', require('./src/routes/notification.routes'));
 
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({
+    error: 'Đã xảy ra lỗi server',
+    message: err.message || 'Unknown error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
