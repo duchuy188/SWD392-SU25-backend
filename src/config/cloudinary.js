@@ -35,6 +35,20 @@ const chatImageStorage = new CloudinaryStorage({
   }
 });
 
+const majorImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'major-images',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif','avif'],
+    transformation: [{
+      width: 800,
+      height: 600,
+      crop: 'fill',
+      gravity: 'center'
+    }]
+  }
+});
+
 const uploadProfilePicture = multer({
   storage: profilePictureStorage,
   limits: {
@@ -63,8 +77,23 @@ const uploadChatImage = multer({
   }
 }).single('image');
 
+const uploadMajorImage = multer({
+  storage: majorImageStorage,
+  limits: {
+    fileSize: 3 * 1024 * 1024 // 3MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file hình ảnh!'), false);
+    }
+  }
+}).single('majorImage');
+
 module.exports = {
   cloudinary,
   uploadProfilePicture,
-  uploadChatImage
+  uploadChatImage,
+  uploadMajorImage
 };

@@ -1,26 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const Major = require('../models/Major');
+const MajorController = require('../controllers/MajorController');
+const { authMiddleware, adminMiddleware } = require('../middlewares/auth.middleware');
+const { uploadMajorImage } = require('../config/cloudinary');
 
-// Get all majors
-router.get('/', async (req, res) => {
-  try {
-    const majors = await Major.find();
-    res.json(majors);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
 
-// Get one major
-router.get('/:id', async (req, res) => {
-  try {
-    const major = await Major.findById(req.params.id);
-    if (!major) return res.status(404).json({ message: 'Major not found' });
-    res.json(major);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+router.get('/', MajorController.getAllMajors);
+
+
+router.get('/admin', authMiddleware, adminMiddleware, MajorController.getAllMajorsAdmin);
+
+
+router.get('/:id', MajorController.getMajorById);
+
+
+router.use(authMiddleware, adminMiddleware);
+router.post('/', uploadMajorImage, MajorController.createMajor);
+router.put('/:id', uploadMajorImage, MajorController.updateMajor);
+router.delete('/:id', MajorController.deleteMajor);
 
 module.exports = router;
