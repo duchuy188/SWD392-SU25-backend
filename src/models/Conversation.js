@@ -21,7 +21,9 @@ const interactionSchema = new mongoose.Schema({
 const conversationSchema = new mongoose.Schema({
   student: {
     type: mongoose.Schema.Types.ObjectId,
-     ref: 'User',
+
+    ref: 'User',
+
     required: true
   },
   startTime: {
