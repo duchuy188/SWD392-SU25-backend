@@ -33,7 +33,17 @@ try {
 
 // Thêm hàm cleanupResponse ở đây
 const cleanupResponse = (text) => {
-  return text.replace(/\*\*/g, '').replace(/\*/g, '');
+  // Loại bỏ dấu ** và *
+  let cleanedText = text.replace(/\*\*/g, '').replace(/\*/g, '');
+  
+  // Xử lý các URL bị lặp lại
+  // Tìm và sửa các mẫu như [url](url)(url) thành [url](url)
+  cleanedText = cleanedText.replace(/\[(https?:\/\/[^\]]+)\]\((https?:\/\/[^)]+)\)\((https?:\/\/[^)]+)\)/g, '[$1]($2)');
+  
+  // Thêm dấu gạch đầu dòng cho các mục liệt kê (dòng bắt đầu bằng khoảng trắng)
+  cleanedText = cleanedText.replace(/^(\s+)([A-Za-z0-9])/gm, '$1- $2');
+  
+  return cleanedText;
 };
 
 const topics = {
@@ -303,7 +313,11 @@ const ChatController = {
         7. Luôn giữ thái độ tích cực và khuyến khích người dùng
         8. Sử dụng emoji phù hợp để tạo sự thân thiện (nhưng không quá nhiều)
         9. KHÔNG SỬ DỤNG dấu ** hoặc * để nhấn mạnh văn bản
-        10. Khi liệt kê thông tin, luôn sử dụng dấu gạch đầu dòng (-) để tạo danh sách có cấu trúc rõ ràng
+        10. KHI LIỆT KÊ THÔNG TIN, LUÔN SỬ DỤNG DẤU GẠCH ĐẦU DÒNG (-) ĐỂ TẠO DANH SÁCH. ĐÂY LÀ YÊU CẦU BẮT BUỘC. MỖI MỤC LIỆT KÊ PHẢI BẮT ĐẦU BẰNG DẤU GẠCH NGANG (-).
+        11. Khi cung cấp URL, chỉ sử dụng một trong hai định dạng sau:
+            - URL thuần túy: https://example.com
+            - URL với văn bản mô tả: [Văn bản mô tả](https://example.com)
+            KHÔNG bao giờ kết hợp cả hai định dạng cùng lúc.
         
         HƯỚNG DẪN PHÂN TÍCH CÂU HỎI:
         1. Hãy tìm thông tin chính xác trong tài liệu liên quan đến câu hỏi.
