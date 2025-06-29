@@ -31,6 +31,10 @@ try {
   console.error('Error reading content file:', error);
 }
 
+// Thêm hàm cleanupResponse ở đây
+const cleanupResponse = (text) => {
+  return text.replace(/\*\*/g, '').replace(/\*/g, '');
+};
 
 const topics = {
   HOC_PHI: {
@@ -298,6 +302,8 @@ const ChatController = {
         6. Khi thích hợp, hãy đặt câu hỏi để hiểu rõ hơn nhu cầu của người dùng
         7. Luôn giữ thái độ tích cực và khuyến khích người dùng
         8. Sử dụng emoji phù hợp để tạo sự thân thiện (nhưng không quá nhiều)
+        9. KHÔNG SỬ DỤNG dấu ** hoặc * để nhấn mạnh văn bản
+        10. Khi liệt kê thông tin, luôn sử dụng dấu gạch đầu dòng (-) để tạo danh sách có cấu trúc rõ ràng
         
         HƯỚNG DẪN PHÂN TÍCH CÂU HỎI:
         1. Hãy tìm thông tin chính xác trong tài liệu liên quan đến câu hỏi.
@@ -315,7 +321,9 @@ const ChatController = {
         ${testInfo || majorInfo ? 'Hãy cá nhân hóa câu trả lời dựa trên kết quả test và ngành học phù hợp của người dùng nếu có liên quan.' : ''}
       `);
       
-      const response = result.response.text();
+      const responseText = result.response.text();
+      // Xử lý phản hồi để loại bỏ các ký tự ** và *
+      const response = cleanupResponse(responseText);
       
       // Lưu hội thoại vào database
       try {
