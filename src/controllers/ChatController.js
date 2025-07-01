@@ -32,6 +32,19 @@ try {
 }
 
 
+const cleanupResponse = (text) => {
+  
+  let cleanedText = text.replace(/\*\*/g, '').replace(/\*/g, '');
+  
+  
+  cleanedText = cleanedText.replace(/\[(https?:\/\/[^\]]+)\]\((https?:\/\/[^)]+)\)\((https?:\/\/[^)]+)\)/g, '[$1]($2)');
+  
+
+  cleanedText = cleanedText.replace(/^(\s+)([A-Za-z0-9])/gm, '$1- $2');
+  
+  return cleanedText;
+};
+
 const topics = {
   HOC_PHI: {
     keywords: ['học phí', 'tiền học', 'chi phí', 'đóng tiền', 'thanh toán', 'học kỳ', 'đồng/HK'],
@@ -298,6 +311,12 @@ const ChatController = {
         6. Khi thích hợp, hãy đặt câu hỏi để hiểu rõ hơn nhu cầu của người dùng
         7. Luôn giữ thái độ tích cực và khuyến khích người dùng
         8. Sử dụng emoji phù hợp để tạo sự thân thiện (nhưng không quá nhiều)
+        9. KHÔNG SỬ DỤNG dấu ** hoặc * để nhấn mạnh văn bản
+        10. KHI LIỆT KÊ THÔNG TIN, LUÔN SỬ DỤNG DẤU GẠCH ĐẦU DÒNG (-) ĐỂ TẠO DANH SÁCH. ĐÂY LÀ YÊU CẦU BẮT BUỘC. MỖI MỤC LIỆT KÊ PHẢI BẮT ĐẦU BẰNG DẤU GẠCH NGANG (-).
+        11. Khi cung cấp URL, chỉ sử dụng một trong hai định dạng sau:
+            - URL thuần túy: https://example.com
+            - URL với văn bản mô tả: [Văn bản mô tả](https://example.com)
+            KHÔNG bao giờ kết hợp cả hai định dạng cùng lúc.
         
         HƯỚNG DẪN PHÂN TÍCH CÂU HỎI:
         1. Hãy tìm thông tin chính xác trong tài liệu liên quan đến câu hỏi.
@@ -315,7 +334,9 @@ const ChatController = {
         ${testInfo || majorInfo ? 'Hãy cá nhân hóa câu trả lời dựa trên kết quả test và ngành học phù hợp của người dùng nếu có liên quan.' : ''}
       `);
       
-      const response = result.response.text();
+      const responseText = result.response.text();
+     
+      const response = cleanupResponse(responseText);
       
       // Lưu hội thoại vào database
       try {
@@ -326,7 +347,7 @@ const ChatController = {
           imageUrl: imageUrl
         });
         
-        // Cập nhật chủ đề cuối cùng
+       
         if (relatedTopics.length > 0 && !relatedTopics.includes('GENERAL')) {
           conversation.lastTopic = relatedTopics[0];
         } else if (isContinueRequest) {
@@ -334,7 +355,7 @@ const ChatController = {
           conversation.lastTopic = currentTopic;
         }
         
-        // Cập nhật context với thông tin chi tiết hơn
+     
         conversation.context = {
           ...conversationContext,
           currentTopic: conversation.lastTopic,
