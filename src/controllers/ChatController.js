@@ -31,16 +31,15 @@ try {
   console.error('Error reading content file:', error);
 }
 
-// Thêm hàm cleanupResponse ở đây
+
 const cleanupResponse = (text) => {
-  // Loại bỏ dấu ** và *
+  
   let cleanedText = text.replace(/\*\*/g, '').replace(/\*/g, '');
   
-  // Xử lý các URL bị lặp lại
-  // Tìm và sửa các mẫu như [url](url)(url) thành [url](url)
+  
   cleanedText = cleanedText.replace(/\[(https?:\/\/[^\]]+)\]\((https?:\/\/[^)]+)\)\((https?:\/\/[^)]+)\)/g, '[$1]($2)');
   
-  // Thêm dấu gạch đầu dòng cho các mục liệt kê (dòng bắt đầu bằng khoảng trắng)
+
   cleanedText = cleanedText.replace(/^(\s+)([A-Za-z0-9])/gm, '$1- $2');
   
   return cleanedText;
@@ -336,7 +335,7 @@ const ChatController = {
       `);
       
       const responseText = result.response.text();
-      // Xử lý phản hồi để loại bỏ các ký tự ** và *
+     
       const response = cleanupResponse(responseText);
       
       // Lưu hội thoại vào database
@@ -348,7 +347,7 @@ const ChatController = {
           imageUrl: imageUrl
         });
         
-        // Cập nhật chủ đề cuối cùng
+       
         if (relatedTopics.length > 0 && !relatedTopics.includes('GENERAL')) {
           conversation.lastTopic = relatedTopics[0];
         } else if (isContinueRequest) {
@@ -356,7 +355,7 @@ const ChatController = {
           conversation.lastTopic = currentTopic;
         }
         
-        // Cập nhật context với thông tin chi tiết hơn
+     
         conversation.context = {
           ...conversationContext,
           currentTopic: conversation.lastTopic,
