@@ -439,15 +439,55 @@ const ChatController = {
         return res.status(403).json({ error: 'Không có quyền truy cập' });
       }
       
-      const { page = 1, limit = 10 } = req.query;
+      const { 
+        page = 1, 
+        limit = 10, 
+        userId, 
+        keyword, 
+        startDate, 
+        endDate, 
+        hasImage 
+      } = req.query;
       
-      const conversations = await Conversation.find()
+      // Xây dựng điều kiện tìm kiếm
+      const query = {};
+      
+      // Lọc theo userId nếu có
+      if (userId) {
+        query.student = userId;
+      }
+      
+      // Lọc theo khoảng thời gian
+      if (startDate || endDate) {
+        query.createdAt = {};
+        if (startDate) {
+          query.createdAt.$gte = new Date(startDate);
+        }
+        if (endDate) {
+          query.createdAt.$lte = new Date(endDate);
+        }
+      }
+      
+      // Lọc theo từ khóa trong nội dung chat
+      if (keyword) {
+        query.$or = [
+          { 'interactions.query': { $regex: keyword, $options: 'i' } },
+          { 'interactions.response': { $regex: keyword, $options: 'i' } }
+        ];
+      }
+      
+      // Lọc các cuộc trò chuyện có hình ảnh
+      if (hasImage === 'true') {
+        query['interactions.imageUrl'] = { $ne: null };
+      }
+      
+      const conversations = await Conversation.find(query)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
         .populate('student', 'fullName email');
       
-      const total = await Conversation.countDocuments();
+      const total = await Conversation.countDocuments(query);
       
       res.status(200).json({
         conversations,

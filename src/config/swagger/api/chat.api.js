@@ -133,9 +133,9 @@
 
 /**
  * @swagger
- * /api/chat/all:
+ * /api/chat/admin/conversations:
  *   get:
- *     summary: Lấy tất cả lịch sử chat (chỉ dành cho admin)
+ *     summary: Lọc và tìm kiếm lịch sử chat (chỉ dành cho admin)
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
@@ -152,6 +152,33 @@
  *           type: integer
  *           default: 10
  *         description: Số lượng kết quả mỗi trang
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         description: Lọc theo ID người dùng
+ *       - in: query
+ *         name: keyword
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm theo từ khóa trong nội dung chat
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Lọc từ ngày (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Lọc đến ngày (YYYY-MM-DD)
+ *       - in: query
+ *         name: hasImage
+ *         schema:
+ *           type: boolean
+ *         description: Lọc các cuộc trò chuyện có hình ảnh
  *     responses:
  *       200:
  *         description: Danh sách lịch sử chat
