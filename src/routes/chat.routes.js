@@ -25,7 +25,7 @@ router.post('/new', ChatController.createNewConversation);
 router.get('/history', ChatController.getConversationHistory);
 
 router.get('/history/:studentId', ChatController.getConversationHistoryById);
-router.get('/all', ChatController.getAllConversations);
+router.get('/admin/conversations', ChatController.getAllConversations);
 
 router.get('/:chatId', ChatController.getConversationById);
 
