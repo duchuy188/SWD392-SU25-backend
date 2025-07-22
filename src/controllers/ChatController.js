@@ -259,6 +259,36 @@ const ChatController = {
         console.error('Error getting user data:', error);
       }
       
+      // Fetch major information from database
+      let majorData = '';
+      try {
+        // Sử dụng lean() để lấy plain JavaScript objects thay vì Mongoose documents
+        // Điều này giúp tránh caching và tối ưu hiệu suất
+        const majors = await Major.find().lean().exec();
+        
+        if (majors && majors.length > 0) {
+          majorData = majors.map(major => {
+            return `
+              NGÀNH HỌC: ${major.name} (${major.code})
+              KHOA: ${major.department}
+              MÔ TẢ: ${major.shortDescription || major.description?.substring(0, 200)}
+              HỌC PHÍ: ${major.tuition.firstSem} (kỳ đầu), ${major.tuition.midSem} (kỳ giữa), ${major.tuition.lastSem} (kỳ cuối)
+              SỐ TÍN CHỈ: ${major.totalCredits}
+              KỸ NĂNG YÊU CẦU: ${major.requiredSkills?.join(', ')}
+              CAMPUS: ${major.availableAt?.join(', ')}
+              TIÊU CHÍ TUYỂN SINH: ${major.admissionCriteria}
+              ${major.isNewProgram ? 'CHƯƠNG TRÌNH MỚI' : ''}
+            `;
+          }).join('\n\n');
+          
+          console.log('Major data loaded from database, count:', majors.length);
+        } else {
+          console.log('No majors found in database, will use content from file');
+        }
+      } catch (error) {
+        console.error('Error loading majors from database:', error);
+      }
+      
       // Sử dụng Gemini để tạo câu trả lời
       const result = await model.generateContent(`
         Bạn là trợ lý tư vấn tuyển sinh của Đại học FPT tên là EduBot. 
@@ -276,6 +306,10 @@ const ChatController = {
         
         ${Object.keys(conversationContext).length > 0 ? `### CONTEXT:\n${JSON.stringify(conversationContext, null, 2)}` : ''}
         
+        ### THÔNG TIN NGÀNH HỌC TỪ DATABASE:
+        ${majorData || 'Không có thông tin ngành học trong database.'}
+        
+        ### THÔNG TIN KHÁC:
         ${fptContent}
         
         ${testInfo ? 'Thông tin về người dùng (chỉ sử dụng khi câu hỏi liên quan đến tính cách, ngành học phù hợp, hoặc hướng nghiệp):\n' + testInfo : ''}
