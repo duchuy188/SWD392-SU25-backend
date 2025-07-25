@@ -12,33 +12,25 @@ require("dotenv").config();
 connectDB();
 
 const app = express();
+// Middleware
 app.use(
   cors({
-    origin: "*", // Cho phép tất cả các origin
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://educhatbot-ai.vercel.app",
+      "https://swd-392-su-25-admin-dashboard-eosin.vercel.app",
+      "https://swd-392-su-25-frontend.vercel.app",
+      "https://edubot-fontend-swd.vercel.app",
+
+      // "https://your-frontend-domain.com" // Uncomment and replace with your actual frontend domain
+
+    ], // Thay bằng domain FE thật của bạn
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-// Middleware
-// app.use(
-//   cors({
-//     origin: [
-//       "http://localhost:5173",
-//       "http://localhost:5174",
-//       "https://educhatbot-ai.vercel.app",
-//       "https://swd-392-su-25-admin-dashboard-eosin.vercel.app",
-//       "https://swd-392-su-25-frontend.vercel.app",
-//       "https://edubot-fontend-swd.vercel.app",
-
-//       // "https://your-frontend-domain.com" // Uncomment and replace with your actual frontend domain
-
-//     ], // Thay bằng domain FE thật của bạn
-//     credentials: true,
-//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   })
-// );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
