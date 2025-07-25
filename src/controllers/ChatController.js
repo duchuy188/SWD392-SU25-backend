@@ -263,25 +263,239 @@ const ChatController = {
       let majorData = '';
       try {
         // Sử dụng lean() để lấy plain JavaScript objects thay vì Mongoose documents
-        // Điều này giúp tránh caching và tối ưu hiệu suất
         const majors = await Major.find().lean().exec();
         
         if (majors && majors.length > 0) {
-          majorData = majors.map(major => {
+          // Xác định các ngành liên quan đến câu hỏi (nếu có)
+          const lowerMessage = combinedMessage.toLowerCase();
+          
+          // Chuẩn hóa câu hỏi: loại bỏ dấu tiếng Việt để dễ so sánh
+          const normalizedMessage = lowerMessage
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd');
+          
+          console.log('Query:', lowerMessage);
+          console.log('Normalized query:', normalizedMessage);
+          
+          // Kiểm tra xem câu hỏi có liên quan đến ngành học không
+          const nganhHocKeywords = [
+            'ngành học', 'nganh hoc', 'nganhhoc', 'ngành', 'nganh',
+            'chuyên ngành', 'chuyen nganh', 'chuyennganh',
+            'khoa', 'khoa học', 'khoa hoc', 'khoahoc',
+            'học phí', 'hoc phi', 'hocphi',
+            'chương trình', 'chuong trinh', 'chuongtrinh',
+            'đào tạo', 'dao tao', 'daotao',
+            'ktpm', 'cntt', 'it', 'se', 'ai', 'is', 'ba', 'dm', 'ib'
+          ];
+          
+          const isAboutMajors = 
+            topics.NGANH_HOC.keywords.some(keyword => 
+              lowerMessage.includes(keyword.toLowerCase()) || 
+              normalizedMessage.includes(keyword.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
+            ) || 
+            nganhHocKeywords.some(keyword => normalizedMessage.includes(keyword)) || 
+            currentTopic === 'NGANH_HOC';
+          
+          console.log('Is about majors:', isAboutMajors);
+          
+          // Tạo danh sách các từ khóa để tìm kiếm ngành học
+          const majorKeywords = [
+            'kỹ thuật phần mềm', 'ky thuat phan mem', 'ki thuat phan mem', 'ktpm', 'software engineering', 'se',
+            'hệ thống thông tin', 'he thong thong tin', 'httt', 'information systems', 'is',
+            'trí tuệ nhân tạo', 'tri tue nhan tao', 'ai', 'artificial intelligence',
+            'an toàn thông tin', 'an toan thong tin', 'attt', 'information security', 'security',
+            'quản trị kinh doanh', 'quan tri kinh doanh', 'qtkd', 'business administration', 'ba',
+            'digital marketing', 'marketing', 'dm',
+            'kinh doanh quốc tế', 'kinh doanh quoc te', 'kdqt', 'international business', 'ib',
+            'công nghệ thông tin', 'cong nghe thong tin', 'cntt', 'information technology', 'it'
+          ];
+          
+          // Nếu câu hỏi liên quan đến ngành học, tìm các ngành cụ thể được đề cập
+          let relevantMajors = [];
+          if (isAboutMajors) {
+            for (const major of majors) {
+              // Chuẩn hóa tên ngành
+              const normalizedMajorName = major.name ? 
+                major.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd') : '';
+              
+              // Kiểm tra tên ngành trong câu hỏi
+              if (major.name && (
+                lowerMessage.includes(major.name.toLowerCase()) || 
+                normalizedMessage.includes(normalizedMajorName)
+              )) {
+                relevantMajors.push(major);
+                continue;
+              }
+              
+              // Kiểm tra mã ngành trong câu hỏi
+              if (major.code && (
+                lowerMessage.includes(major.code.toLowerCase()) || 
+                normalizedMessage.includes(major.code.toLowerCase())
+              )) {
+                relevantMajors.push(major);
+                continue;
+              }
+              
+              // Tìm theo từ khóa
+              for (const keyword of majorKeywords) {
+                const normalizedKeyword = keyword
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '')
+                  .replace(/đ/g, 'd');
+                  
+                // Sửa đổi điều kiện so sánh để linh hoạt hơn
+                if ((lowerMessage.includes(keyword) || normalizedMessage.includes(normalizedKeyword)) && 
+                    (normalizedMajorName.includes(normalizedKeyword) || 
+                     (major.code && major.code.toLowerCase().includes(normalizedKeyword)) ||
+                     // Thêm điều kiện đặc biệt cho một số từ khóa phổ biến
+                     (normalizedKeyword === 'ktpm' && normalizedMajorName.includes('ky thuat phan mem')) ||
+                     (normalizedKeyword === 'cntt' && normalizedMajorName.includes('cong nghe thong tin')) ||
+                     (normalizedKeyword === 'se' && major.code && major.code === 'SE') ||
+                     (normalizedKeyword === 'it' && major.code && major.code === 'IT')
+                    )) {
+                  relevantMajors.push(major);
+                  break;
+                }
+              }
+            }
+          }
+          
+          console.log('Relevant majors found:', relevantMajors.length);
+          if (relevantMajors.length > 0) {
+            console.log('Found majors:', relevantMajors.map(m => m.name).join(', '));
+          }
+          
+          // Xử lý đặc biệt cho một số từ khóa phổ biến
+          if (relevantMajors.length === 0 && isAboutMajors) {
+            if (normalizedMessage.includes('ktpm') || normalizedMessage.includes('ky thuat phan mem') || 
+                normalizedMessage.includes('ki thuat phan mem') || normalizedMessage.includes('se')) {
+              // Tìm ngành Kỹ thuật phần mềm
+              const seMajor = majors.find(m => m.code === 'SE' || 
+                (m.name && m.name.toLowerCase().includes('kỹ thuật phần mềm')));
+              if (seMajor) relevantMajors.push(seMajor);
+            }
+            
+            if (normalizedMessage.includes('cntt') || normalizedMessage.includes('cong nghe thong tin') || 
+                normalizedMessage.includes('it')) {
+              // Tìm ngành Công nghệ thông tin
+              const itMajor = majors.find(m => m.code === 'IT' || 
+                (m.name && m.name.toLowerCase().includes('công nghệ thông tin')));
+              if (itMajor) relevantMajors.push(itMajor);
+            }
+            
+            // Thêm các trường hợp đặc biệt khác nếu cần
+          }
+          
+          // Nếu có ngành liên quan hoặc câu hỏi về ngành học, hiển thị thông tin chi tiết
+          if (relevantMajors.length > 0 || isAboutMajors) {
+            // Nếu có ngành cụ thể được đề cập, chỉ hiển thị thông tin về các ngành đó
+            // Nếu không, hiển thị một số ngành phổ biến nếu câu hỏi liên quan đến ngành học
+            const majorsToFormat = relevantMajors.length > 0 ? relevantMajors : 
+                                  (isAboutMajors ? majors.slice(0, 3) : []);
+            
+            // Giới hạn số lượng ngành hiển thị để tránh prompt quá dài
+            const limitedMajors = majorsToFormat.slice(0, 5);
+            
+            majorData = limitedMajors.map(major => {
+              // Xử lý thông tin về cấu trúc chương trình học
+              let programStructureInfo = '';
+              if (major.programStructure) {
+                programStructureInfo = `
+                  CHƯƠNG TRÌNH ĐÀO TẠO:
+                  - Giai đoạn chuẩn bị: ${major.programStructure.preparation?.duration || 'N/A'}
+                    ${major.programStructure.preparation?.objectives?.map(obj => `  + ${obj}`).join('\n') || ''}
+                  - Giai đoạn cơ bản: ${major.programStructure.basic?.duration || 'N/A'}
+                    ${major.programStructure.basic?.objectives?.map(obj => `  + ${obj}`).join('\n') || ''}
+                  - Giai đoạn OJT: ${major.programStructure.ojt?.duration || 'N/A'}
+                    ${major.programStructure.ojt?.objectives?.map(obj => `  + ${obj}`).join('\n') || ''}
+                  - Giai đoạn chuyên ngành: ${major.programStructure.specialization?.duration || 'N/A'}
+                    ${major.programStructure.specialization?.objectives?.map(obj => `  + ${obj}`).join('\n') || ''}
+                  - Giai đoạn tốt nghiệp: ${major.programStructure.graduation?.duration || 'N/A'}
+                    ${major.programStructure.graduation?.objectives?.map(obj => `  + ${obj}`).join('\n') || ''}
+                `;
+              }
+              
+              // Xử lý thông tin về triển vọng nghề nghiệp
+              let careerInfo = '';
+              if (major.careerProspects && major.careerProspects.length > 0) {
+                careerInfo = `
+                  TRIỂN VỌNG NGHỀ NGHIỆP:
+                  ${major.careerProspects.map(career => `- ${career.title}: ${career.description}`).join('\n')}
+                `;
+              }
+              
+              // Xử lý thông tin về học bổng
+              let scholarshipInfo = '';
+              if (major.scholarships && major.scholarships.length > 0) {
+                scholarshipInfo = `
+                  HỌC BỔNG:
+                  ${major.scholarships.map(scholarship => `- ${scholarship.name}: ${scholarship.value} - ${scholarship.description}`).join('\n')}
+                `;
+              }
+              
+              // Xử lý thông tin về học phí theo campus
+              let tuitionByCampusInfo = '';
+              if (major.tuitionByCampus) {
+                tuitionByCampusInfo = `
+                  HỌC PHÍ THEO CAMPUS:
+                  ${major.tuitionByCampus.HANOI ? `- Hà Nội: ${major.tuitionByCampus.HANOI.firstSem || 'N/A'} (kỳ đầu), ${major.tuitionByCampus.HANOI.midSem || 'N/A'} (kỳ giữa), ${major.tuitionByCampus.HANOI.lastSem || 'N/A'} (kỳ cuối)` : ''}
+                  ${major.tuitionByCampus.HCMC ? `- TP.HCM: ${major.tuitionByCampus.HCMC.firstSem || 'N/A'} (kỳ đầu), ${major.tuitionByCampus.HCMC.midSem || 'N/A'} (kỳ giữa), ${major.tuitionByCampus.HCMC.lastSem || 'N/A'} (kỳ cuối)` : ''}
+                `;
+              }
+              
+              // Kết hợp tất cả thông tin
             return `
-              NGÀNH HỌC: ${major.name} (${major.code})
-              KHOA: ${major.department}
-              MÔ TẢ: ${major.shortDescription || major.description?.substring(0, 200)}
-              HỌC PHÍ: ${major.tuition.firstSem} (kỳ đầu), ${major.tuition.midSem} (kỳ giữa), ${major.tuition.lastSem} (kỳ cuối)
-              SỐ TÍN CHỈ: ${major.totalCredits}
-              KỸ NĂNG YÊU CẦU: ${major.requiredSkills?.join(', ')}
-              CAMPUS: ${major.availableAt?.join(', ')}
-              TIÊU CHÍ TUYỂN SINH: ${major.admissionCriteria}
+                NGÀNH HỌC: ${major.name || ''} (${major.code || ''})
+                KHOA: ${major.department || ''}
+                MÔ TẢ: ${major.shortDescription || (major.description ? major.description : '')}
+                HỌC PHÍ: ${major.tuition?.firstSem || 'N/A'} (kỳ đầu), ${major.tuition?.midSem || 'N/A'} (kỳ giữa), ${major.tuition?.lastSem || 'N/A'} (kỳ cuối)
+                SỐ TÍN CHỈ: ${major.totalCredits || 'N/A'}
+                KỸ NĂNG YÊU CẦU: ${(major.requiredSkills && major.requiredSkills.length > 0) ? major.requiredSkills.join(', ') : 'Không có thông tin'}
+                CAMPUS: ${(major.availableAt && major.availableAt.length > 0) ? major.availableAt.join(', ') : 'Không có thông tin'}
+                TIÊU CHÍ TUYỂN SINH: ${major.admissionCriteria || 'Không có thông tin'}
               ${major.isNewProgram ? 'CHƯƠNG TRÌNH MỚI' : ''}
+                
+                ${programStructureInfo}
+                ${careerInfo}
+                ${scholarshipInfo}
+                ${tuitionByCampusInfo}
+                
+                ĐIỂM MẠNH:
+                ${(major.advantages && major.advantages.length > 0) ? major.advantages.map(adv => `- ${adv}`).join('\n') : 'Không có thông tin'}
             `;
           }).join('\n\n');
+            
+            // Nếu có nhiều ngành hơn giới hạn, thêm thông báo
+            if (majorsToFormat.length > 5) {
+              majorData += `\n\nCòn ${majorsToFormat.length - 5} ngành học khác không được hiển thị ở đây.`;
+            }
+          } else {
+            // Nếu câu hỏi không liên quan đến ngành học, không cần đưa thông tin ngành vào prompt
+            majorData = '';
+          }
           
           console.log('Major data loaded from database, count:', majors.length);
+          // Log một phần của dữ liệu để debug
+          if (majorData) {
+            console.log('Sample major data:', majorData.substring(0, 300) + '...');
+          } else {
+            console.log('No major data included in this prompt (not relevant to query)');
+          }
+
+          if (relevantMajors.length > 0) {
+            console.log('DEBUG - Major details:');
+            relevantMajors.forEach(major => {
+              console.log(`  Name: ${major.name}`);
+              console.log(`  Code: ${major.code}`);
+              console.log(`  Tuition: ${JSON.stringify(major.tuition)}`);
+            });
+            
+            // Lưu ngành hiện tại vào context
+            conversationContext.currentMajor = relevantMajors[0].name;
+            conversationContext.currentMajorCode = relevantMajors[0].code;
+            conversationContext.currentMajorTuition = relevantMajors[0].tuition;
+          }
         } else {
           console.log('No majors found in database, will use content from file');
         }
@@ -306,11 +520,16 @@ const ChatController = {
         
         ${Object.keys(conversationContext).length > 0 ? `### CONTEXT:\n${JSON.stringify(conversationContext, null, 2)}` : ''}
         
-        ### THÔNG TIN NGÀNH HỌC TỪ DATABASE:
-        ${majorData || 'Không có thông tin ngành học trong database.'}
+        ### THÔNG TIN THAM KHẢO:
+        ${majorData ? `### THÔNG TIN NGÀNH HỌC (DỮ LIỆU CHÍNH THỨC):\n${majorData}` : ''}
+        ${!majorData && fptContent ? `### THÔNG TIN CHUNG:\n${fptContent}` : ''}
         
-        ### THÔNG TIN KHÁC:
-        ${fptContent}
+        HƯỚNG DẪN QUAN TRỌNG KHI TRẢ LỜI:
+        1. PHẢI sử dụng chính xác thông tin từ phần "THÔNG TIN NGÀNH HỌC (DỮ LIỆU CHÍNH THỨC)" khi trả lời về ngành học.
+        2. KHÔNG được thay đổi bất kỳ con số, học phí, hoặc thông tin định lượng nào từ dữ liệu chính thức.
+        3. KHÔNG được sử dụng thông tin từ "THÔNG TIN BỔ SUNG" nếu đã có thông tin trong "THÔNG TIN NGÀNH HỌC".
+        4. Khi người dùng hỏi về một ngành cụ thể, cung cấp thông tin chi tiết về ngành đó, không cần đề cập đến các ngành khác.
+        5. Khi trả lời về học phí, phải sử dụng chính xác số tiền từ dữ liệu chính thức, không được làm tròn hoặc thay đổi.
         
         ${testInfo ? 'Thông tin về người dùng (chỉ sử dụng khi câu hỏi liên quan đến tính cách, ngành học phù hợp, hoặc hướng nghiệp):\n' + testInfo : ''}
         ${majorInfo ? 'Thông tin về ngành học phù hợp (chỉ sử dụng khi câu hỏi liên quan đến lựa chọn ngành học):\n' + majorInfo : ''}
@@ -321,10 +540,9 @@ const ChatController = {
         
         HƯỚNG DẪN QUAN TRỌNG VỀ DUY TRÌ NGỮ CẢNH:
         1. Đọc kỹ lịch sử hội thoại và duy trì tính nhất quán với các câu trả lời trước đó
-        2. Nếu người dùng hỏi tiếp về chủ đề hiện tại (${currentTopic}), tiếp tục cung cấp thông tin về chủ đề đó
-        3. Nếu người dùng hỏi "còn gì nữa", "nói thêm đi", "mô tả thêm", hãy tiếp tục cung cấp thông tin về chủ đề cuối cùng
-        4. Chỉ hỏi lại người dùng khi thực sự không hiểu họ muốn biết gì
-        5. Nếu người dùng đang tìm hiểu về một chủ đề cụ thể, KHÔNG chuyển đề tài trừ khi họ rõ ràng hỏi về chủ đề khác
+        2. Nếu người dùng đang hỏi về một ngành cụ thể (${conversationContext.currentMajor || 'không có'}), hãy tiếp tục cung cấp thông tin về ngành đó trừ khi họ rõ ràng hỏi về ngành khác
+        3. Nếu người dùng hỏi "học phí", "mức học phí" mà không nêu rõ ngành nào, hãy trả lời về ngành đang được đề cập trong cuộc hội thoại (${conversationContext.currentMajor || 'không có'})
+        4. KHÔNG được thay đổi các con số học phí từ dữ liệu chính thức
         
         ${isContinueRequest ? `
         NGƯỜI DÙNG ĐANG YÊU CẦU THÊM THÔNG TIN VỀ CHỦ ĐỀ ${currentTopic}:
