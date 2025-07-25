@@ -13,24 +13,19 @@ connectDB();
 
 const app = express();
 // Middleware
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "https://educhatbot-ai.vercel.app",
-  "https://swd-392-su-25-admin-dashboard-eosin.vercel.app",
-  "https://swd-392-su-25-frontend.vercel.app",
-  "https://edubot-fontend-swd.vercel.app",
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://educhatbot-ai.vercel.app",
+      "https://swd-392-su-25-admin-dashboard-eosin.vercel.app",
+      "https://swd-392-su-25-frontend.vercel.app",
+      "https://edubot-fontend-swd.vercel.app",
+
+      // "https://your-frontend-domain.com" // Uncomment and replace with your actual frontend domain
+
+    ], // Thay bằng domain FE thật của bạn
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -46,6 +41,8 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, swaggerUiOptions)
 );
+
+
 
 // Add your routes here
 app.use('/api/majors', require('./src/routes/majors.routes'));
