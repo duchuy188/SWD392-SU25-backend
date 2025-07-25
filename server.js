@@ -12,7 +12,6 @@ require("dotenv").config();
 connectDB();
 
 const app = express();
-
 // Middleware
 app.use(
   cors({
@@ -22,6 +21,7 @@ app.use(
       "https://educhatbot-ai.vercel.app",
       "https://swd-392-su-25-admin-dashboard-eosin.vercel.app",
       "https://swd-392-su-25-frontend.vercel.app",
+      "https://edubot-fontend-swd.vercel.app",
 
       // "https://your-frontend-domain.com" // Uncomment and replace with your actual frontend domain
 
