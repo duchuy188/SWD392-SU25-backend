@@ -21,14 +21,6 @@ const studentSchema = new mongoose.Schema({
   preferredFPTMajors: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Major'
-  }],
-  testResults: [{
-    test: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Test'
-    },
-    score: mongoose.Schema.Types.Mixed,
-    date: Date
   }]
 });
 

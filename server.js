@@ -46,7 +46,6 @@ app.use(
 
 // Add your routes here
 app.use('/api/majors', require('./src/routes/majors.routes'));
-app.use('/api/scholarships', require('./src/routes/scholarships.routes'));
 app.use('/api/chat', require('./src/routes/chat.routes'));
 app.use('/api/auth', require('./src/routes/auth.routes'));
 app.use('/api/admin', require('./src/routes/admin.routes'));
