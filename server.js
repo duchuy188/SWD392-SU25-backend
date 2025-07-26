@@ -22,6 +22,7 @@ app.use(
       "https://swd-392-su-25-admin-dashboard-eosin.vercel.app",
       "https://swd-392-su-25-frontend.vercel.app",
       "https://edubot-fontend-swd.vercel.app",
+      "https://edubot-swd-frontend.vercel.app",
 
       // "https://your-frontend-domain.com" // Uncomment and replace with your actual frontend domain
 
